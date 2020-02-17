@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using CrazyScraper.Commands;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
@@ -27,11 +28,12 @@ namespace CrazyScraper
             var builder = new HostBuilder()
                 .ConfigureServices((hostContext, services) =>
                 {
+                    hostContext.Configuration = Configuration;
                 });
 
             try
             {
-                await builder.RunCommandLineApplicationAsync<CrazyScraperCmd>(args);
+                await builder.RunCommandLineApplicationAsync<MainCommand>(args);
             }
             catch (Exception ex)
             {
