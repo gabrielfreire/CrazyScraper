@@ -1,5 +1,8 @@
 ﻿using CrazyScraper.Commands;
+<<<<<<< HEAD
 using CrazyScraper.Services;
+=======
+>>>>>>> 0aca8be84c79fb45022d240a0c3d17d947e60157
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -30,6 +33,7 @@ namespace CrazyScraper
                 .ConfigureServices((hostContext, services) =>
                 {
                     services.AddSingleton<InstagramService>();
+                    hostContext.Configuration = Configuration;
                 });
 
             try

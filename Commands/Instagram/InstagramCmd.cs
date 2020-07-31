@@ -1,4 +1,5 @@
-﻿using HtmlAgilityPack;
+﻿using CrazyScraper.Models;
+using HtmlAgilityPack;
 using McMaster.Extensions.CommandLineUtils;
 using Newtonsoft.Json.Linq;
 using System;
@@ -11,51 +12,65 @@ using System.Threading.Tasks;
 
 namespace CrazyScraper.Commands.Instagram
 {
+    //... instagram
     [Command(Name ="instagram", Description ="Scrape an Instagram Profile" )]
     [Subcommand(typeof(PostSubcommand))]
     public class InstagramCmd : BaseCommand
     {
+        // -p gabrielfreiredev
         [Option(CommandOptionType.MultipleValue, ShortName = "p", LongName = "profiles", Description = "Instagram Profile Name", ValueName = "profiles", ShowInHelpText = true)]
-        public List<string> ProfilesName { get; set; }
+        public List<string> ProfilesNames { get; set; }
 
+        // -o file.json
+        [Option(CommandOptionType.SingleValue, ShortName = "o", LongName = "output", Description = "Output file name", ValueName = "output", ShowInHelpText = true)]
+        public string OutputFile { get; set; }
 
-        private async IAsyncEnumerable<string> GetData(List<string> profilesName)
+        public InstagramCmd()
         {
-            foreach(var name in profilesName)
-            {
-                await Task.Delay(0);
-                yield return name;
-            }
         }
 
         protected override async Task<int> OnExecute(CommandLineApplication app)
         {
-            var profileNamesAsyncEnumerable = GetData(ProfilesName);
             
-            if(await profileNamesAsyncEnumerable.IsEmptyAsync())
+            if(ProfilesNames.Count == 0)
             {
                 OutputError("Please provide at least one profile name");
                 app.ShowHelp();
             }
 
-            // create a task list
-            var taskList = new List<Task>();
+            if (!string.IsNullOrEmpty(OutputFile))
+            {
+                OutputToConsole($"File name {OutputFile}\n");
+                OutputWarning("Sorry, output to file is not yet available :(\n");
+            }
 
-            await foreach (var profileName in profileNamesAsyncEnumerable)
+            // create a task list
+            var taskList = new List<Task<InstagramUser>>();
+
+            OutputToConsole($"Scraping...\n");
+            foreach (var profileName in ProfilesNames)
             {
                 taskList.Add(ScrapeAsync(profileName));
             }
 
             // run all of them asynchronously
-            await Task.WhenAll(taskList);
+            var instagramUsers = await Task.WhenAll(taskList);
+            OutputToConsole($"Done.\n");
+
+            // display results
+            foreach (var instagramUser in instagramUsers)
+            {
+                if (instagramUser != null)
+                {
+                    instagramUser.Show();
+                }
+            }
 
             return 1;
         }
 
-        private async Task ScrapeAsync(string ProfileName)
+        private async Task<InstagramUser> ScrapeAsync(string ProfileName)
         {
-            OutputToConsole($"Scraping Instagram Page of {ProfileName}...\n");
-
             try
             {
                 using (var client = new HttpClient())
@@ -64,55 +79,18 @@ namespace CrazyScraper.Commands.Instagram
                     if (response.IsSuccessStatusCode)
                     {
                         var htmlBody = await response.Content.ReadAsStringAsync();
-                        var instagramUser = ParseInstagramHtml(htmlBody);
-                        if (instagramUser != null)
-                        {
-                           // instagramUser.Show(Console);
-                        }
+                        return InstagramUser.FromHtml(htmlBody);
                     }
+                    OutputError($"Profile {ProfileName} doesn't exist");
                 }
+                return null;
             }
             catch (Exception ex)
             {
                 OutputError($"{ProfileName} is not a valid user or something else happened: {ex.Message}");
+                return null;
             }
         }
 
-        private InstagramUser ParseInstagramHtml(string htmlBody)
-        {
-            // Make html document node
-            var htmlDoc = new HtmlDocument();
-            htmlDoc.LoadHtml(htmlBody);
-            var htmlDocument = htmlDoc.DocumentNode;
-            
-            // get scripts
-            var scripts = htmlDocument.SelectNodes("/html/body/script");
-            var offset  = "window._sharedData = ";
-            
-            // Look for the correct script tag, it is usually the first one
-            var script  = scripts[0];
-
-            // get correct script tag element and extract text
-            var content = script.InnerText;
-            var json    = content.Substring(offset.Length).Replace(";", "");
-
-            // get dynamic JSON object
-            dynamic stuff           = JObject.Parse(json);
-            dynamic userProfilePage = stuff.entry_data?.ProfilePage[0]?.graphql?.user;
-
-            // create instagram user object
-            var instagramUser = new InstagramUser
-            {
-                biography      = userProfilePage.biography,
-                username       = userProfilePage.username,
-                full_name      = userProfilePage.full_name,
-                external_url   = userProfilePage.external_url,
-                id             = userProfilePage.id,
-                follower_count = userProfilePage.edge_followed_by.count,
-                follow_count   = userProfilePage.edge_follow.count,
-            };
-
-            return instagramUser;
-        }
     }
 }
