@@ -1,3 +1,5 @@
 .vs
+.local-chromium
 obj
 bin
+*.json

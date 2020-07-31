@@ -12,15 +12,12 @@ using System.Threading.Tasks;
 namespace CrazyScraper.Commands.Instagram
 {
     [Command(Name ="instagram", Description ="Scrape an Instagram Profile" )]
-    public class InstagramCmd : CrazyScraperCmdBase
+    [Subcommand(typeof(PostSubcommand))]
+    public class InstagramCmd : BaseCommand
     {
         [Option(CommandOptionType.MultipleValue, ShortName = "p", LongName = "profiles", Description = "Instagram Profile Name", ValueName = "profiles", ShowInHelpText = true)]
         public List<string> ProfilesName { get; set; }
 
-        public InstagramCmd(IConsole console)
-        {
-            _console = console;
-        }
 
         private async IAsyncEnumerable<string> GetData(List<string> profilesName)
         {
@@ -70,7 +67,7 @@ namespace CrazyScraper.Commands.Instagram
                         var instagramUser = ParseInstagramHtml(htmlBody);
                         if (instagramUser != null)
                         {
-                            instagramUser.Show(_console);
+                           // instagramUser.Show(Console);
                         }
                     }
                 }

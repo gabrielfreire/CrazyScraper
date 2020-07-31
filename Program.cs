@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using CrazyScraper.Commands;
+using CrazyScraper.Services;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
@@ -27,11 +29,12 @@ namespace CrazyScraper
             var builder = new HostBuilder()
                 .ConfigureServices((hostContext, services) =>
                 {
+                    services.AddSingleton<InstagramService>();
                 });
 
             try
             {
-                await builder.RunCommandLineApplicationAsync<CrazyScraperCmd>(args);
+                await builder.RunCommandLineApplicationAsync<MainCommand>(args);
             }
             catch (Exception ex)
             {
