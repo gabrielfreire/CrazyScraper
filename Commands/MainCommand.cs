@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace CrazyScraper.Commands
 {
-    [Command(Name ="crazyscraper", ThrowOnUnexpectedArgument =false, OptionsComparison =System.StringComparison.InvariantCultureIgnoreCase )]
+    [Command(Name ="crazyscraper", OptionsComparison =System.StringComparison.InvariantCultureIgnoreCase )]
     [VersionOptionFromMember("--version", MemberName =nameof(GetVersion))]
     [Subcommand(typeof(InstagramCmd))]
     public class MainCommand : BaseCommand
